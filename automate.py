@@ -2,6 +2,8 @@ from selenium import webdriver
 import time
 import string
 import threading
+import getpass
+
 
 def search(browser,word):
     text_area = browser.find_element_by_id('sb_form_q')
@@ -60,14 +62,18 @@ def load(email,password):
     browser.quit()
 
 
-
-user_email = ['nkvamsi97@gmail.com','kchaitanya863@gmail.com','nkvamsi97@outlook.com']
-user_pass = ['nagarjuna','Kchaitanya123','Krishna!23']
+user_email = []
+user_pass = []
+print('Enter number of accounts you want to automate')
+n = int(input())
+for i in range(n):
+    print('Enter email id :')
+    user_email.append(input())
+    print('Enter password for ' + str(user_email[i]))
+    user_pass.append(getpass.getpass())
 
 t = []
 for i in range(3):
     t.append(threading.Thread(target=load, args=(user_email[i],user_pass[i],)))
 for i in t:
     i.start()
-for i in t:
-    i.join()
