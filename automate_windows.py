@@ -2,6 +2,7 @@
 import time
 import string
 import threading
+import multiprocessing
 import getpass
 import os
 from msedge.selenium_tools import Edge, EdgeOptions
@@ -57,7 +58,7 @@ def quiz(browser):
         time.sleep(2)
     except:
         pass
-
+    time.sleep(4)
     a=[]
     a = browser.find_elements_by_css_selector('div[id=daily-sets] mee-card-group.ng-scope.ng-isolate-scope.mobileViewMode div.actionLink.x-hidden-vp1')
     a[0].find_element_by_css_selector('span').click()
@@ -116,14 +117,19 @@ def quiz(browser):
                     pass
     except:
         print('failed 2')
-
+    try:
+        for i in range(0,11):
+            browser.find_element_by_css_selector('div[id=rqAnswerOption0]').click()
+            time.sleep(5)
+    except:
+        print('failed 3')
     #------------------------------------------------------------
 
 def mobile(browser,email,password):
     chrome_options.add_argument('--user-agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_1_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1)"')
     # browser = webdriver.Safari(executable_path = '/usr/bin/safaridriver')
     # browser = webdriver.Chrome(executable_path = 'chromedriver', chrome_options=chrome_options)
-    browser = Edge(executable_path="C:/Users/dvlupmic/Documents/bing/driver.exe",options=chrome_options)
+    browser = Edge(executable_path="C:/Users/dvlupmic1/Downloads/bing/driver.exe",options=chrome_options)
     browser.get('https://www.bing.com')
 
     time.sleep(8)
@@ -141,7 +147,7 @@ def mobile(browser,email,password):
 
 def load(email,password):
     
-    browser = Edge(executable_path="C:/Users/dvlupmic/Documents/bing/driver.exe", options=chrome_options)
+    browser = Edge(executable_path="C:/Users/dvlupmic1/Downloads/bing/driver.exe", options=chrome_options)
     # browser = webdriver.Chrome(executable_path = 'chromedriver', chrome_options=chrome_options)
     # browser = webdriver.Safari(executable_path = '/usr/bin/safaridriver')    
     browser.get('https://www.bing.com')
@@ -166,23 +172,19 @@ chrome_options = EdgeOptions()
 chrome_options.use_chromium = True
 chrome_options.add_argument('--no-sandbox')
 
-user_email = ['nkvamsi97@gmail.com','kchaitanya863@gmail.com','nlumia0@outlook.com','nlumia2@outlook.com']
-user_pass = ['krishna!','Kchaitanya123','krishna!','krishna!']
+user_email = [] # Enter email ids here (Can add multiple account user email)
+user_pass = [] # Enter password here (Can add multiple account passwords)
 
-# user_email = ['nlumia0@outlook.com','nlumia2@outlook.com']
-# user_pass = ['krishna!','krishna!']
-
-# user_email = [user_email[0]] + [user_email[1]]
-# user_pass = [user_pass[0]] + [user_pass[1]]
 
 t = []
-for i in range(len(user_email)):
-    t.append(threading.Thread(target=load, args=(user_email[i],user_pass[i],)))
+if __name__ == '__main__':
+    for i in range(len(user_email)):
+        t.append(multiprocessing.Process(target=load, args=(user_email[i],user_pass[i],)))
 
-for i in t:
-    i.start()
-for i in t:
-    i.join()
+    for i in t:
+        i.start()
+    for i in t:
+        i.join()
 
-print('Done')
-time.sleep(300)
+    print('Done')
+    time.sleep(300)

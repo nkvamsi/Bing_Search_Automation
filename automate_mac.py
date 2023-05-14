@@ -1,15 +1,20 @@
 # from selenium import webdriver
 import time
 import string
-import threading
+import sys
+# import threading
+import multiprocessing
 import getpass
 import os
 from msedge.selenium_tools import Edge, EdgeOptions
+from selenium.webdriver.common.keys import Keys
+
 
 def search(browser,word):
 
     text_area = browser.find_element_by_id('sb_form_q')
     text_area.send_keys(word)
+    text_area.send_keys(Keys.ENTER)
     try:
         browser.find_element_by_id('sb_form_go').click()
     except:
@@ -20,7 +25,7 @@ def search(browser,word):
     time.sleep(2)
 
 
-def alphabets(browser,device):
+def alphabets(browser,device,email):
     
     if device == 'PC':
         for i in string.ascii_lowercase[:10]:
@@ -34,9 +39,8 @@ def alphabets(browser,device):
 def process(browser,email,password):
 
     browser.find_element_by_id('i0116').send_keys(email)
-
     browser.find_element_by_id('idSIButton9').click()
-    time.sleep(4)
+    time.sleep(5)
     browser.find_element_by_id('i0118').send_keys(password)
     time.sleep(1)
     browser.find_element_by_id('idSIButton9').click()
@@ -44,12 +48,13 @@ def process(browser,email,password):
     try:
         browser.find_element_by_id('idBtn_Back').click()
         time.sleep(5)
+        browser.find_element_by_id('i0118').send_keys(password)
+        time.sleep(1)
+        browser.find_element_by_id('idSIButton9').click()
+        time.sleep(5)
     except:
-        pass
-    try:
-        browser.find_element_by_css_selector('div[id=msaTile]').click()
-    except:
-        pass
+        print('Ignore')
+
 
 def quiz(browser):
     # Testing
@@ -119,6 +124,12 @@ def quiz(browser):
                     pass
     except:
         print('failed 2')
+    try:
+        for i in range(0,11):
+            browser.find_element_by_css_selector('div[id=rqAnswerOption0]').click()
+            time.sleep(5)
+    except:
+        print('failed 3')
 
     #------------------------------------------------------------
 
@@ -126,8 +137,8 @@ def mobile(email,password):
     # chrome_options.add_argument('--user-agent="Mozilla/5.0 (iPhone; CPU iPhone OS 12_1_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1)"')
     # browser = webdriver.Safari(executable_path = '/usr/bin/safaridriver')
     # browser = webdriver.Chrome(executable_path = 'chromedriver', chrome_options=chrome_options)
-    browser = Edge(executable_path="/Users/krishna/Documents/bing/driver",capabilities=desired_cap)
-    browser.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/100.1185.50 Mobile/15E148 Safari/605.1.15'})
+    browser = Edge(executable_path="/Users/vamsi/Downloads/bing/driver",capabilities=desired_cap)
+    browser.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 EdgiOS/100.1185.50 Mobile/15E148 Safari/605.1.15'})
     browser.get('https://www.bing.com')
     browser.get('https://login.live.com/login.srf?wa=wsignin1.0&rpsnv=13&id=264960&wreply=https%3a%2f%2fwww.bing.com%2fsecure%2fPassport.aspx%3frequrl%3dhttps%253a%252f%252fwww.bing.com%252f%253fwlexpsignin%253d1%26sig%3d2F18EA8355256B982C9EF89254006A9C&wp=MBI_SSL&lc=1033&CSRFToken=39b09c7a-50b6-4b8f-9974-ac17cd9293c2&aadredir=1')
     # time.sleep(4)
@@ -143,10 +154,10 @@ def mobile(email,password):
 
     process(browser,email,password)
 
-    alphabets(browser,'Mobile')
+    alphabets(browser,'Mobile',email)
 
-def pc(email,password):
-    browser = Edge(executable_path="/Users/krishna/Documents/bing/driver", capabilities=desired_cap)
+def pc(email,password,arg):
+    browser = Edge(executable_path="/Users/vamsi/Downloads/bing/driver", capabilities=desired_cap)
     # browser = webdriver.Chrome(executable_path = 'chromedriver', chrome_options=chrome_options)
     # browser = webdriver.Safari(executable_path = '/usr/bin/safaridriver')   
     # browser.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": '    Mozilla/5.0 (Macintosh; Intel Mac OS X 12_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/104.0.1293.70'})    
@@ -163,37 +174,63 @@ def pc(email,password):
 
     process(browser,email,password)
 
-    alphabets(browser,'PC')
+    if arg and arg[0] != 'quiz':
+        alphabets(browser,'PC',email)
+    elif arg and arg[0] != 'alp':
+        quiz(browser)
+    else:
+        alphabets(browser,'PC',email)
+        quiz(browser)
 
-    quiz(browser)
-
-def load(email,password):
+def load(email,password,arg):
     
-    pc(email,password)
-    mobile(email,password)
+    if arg:
+        if arg[0] == 'pc':
+            pc(email,password,arg)
+        elif arg[0] == 'mobile':
+            mobile(email,password)
+        elif arg[0] in ['quiz','alp']:
+            pc(email,password,arg)
+        else:
+            pc(email,password,arg)
+            mobile(email,password)
+    else:
+        pc(email,password,arg)
+        mobile(email,password)
+
+    print('Done')
+    time.sleep(300)
 
 desired_cap = {}
 chrome_options = EdgeOptions()
 chrome_options.use_chromium = True
 chrome_options.add_argument('--no-sandbox')
 
-user_email = ['nkvamsi97@gmail.com','kchaitanya863@gmail.com','nlumia0@outlook.com','nlumia2@outlook.com']
-user_pass = ['krishna!','Kchaitanya123','krishna!','krishna!']
+u_email = [] # Enter email ids here (Can add multiple account user email)
+u_pass = [] # Enter password here (Can add multiple account passwords)
 
-# user_email = ['nlumia0@outlook.com','nlumia2@outlook.com']
-# user_pass = ['krishna!','krishna!']
+if __name__ == '__main__':
+    t = []
+    arg = sys.argv[1:]
+    user_email = []
+    user_pass = []
+    if arg:
+        if len(arg) > 1:
+            ep = arg[1].split(',')
+            for i in ep:
+                user_email.append(u_email[int(i)-1])
+                user_pass.append(u_pass[int(i)-1])
+        else:
+            user_email = u_email
+            user_pass = u_pass
+    else:
+        user_email = u_email
+        user_pass = u_pass
+    for i in range(len(user_email)):
+        # t.append(threading.Thread(target=load, args=(user_email[i],user_pass[i],)))
+        t.append(multiprocessing.Process(target=load, args=(user_email[i],user_pass[i],arg)))
 
-# user_email = [user_email[0]]
-# user_pass = [user_pass[0]]
-
-t = []
-for i in range(len(user_email)):
-    t.append(threading.Thread(target=load, args=(user_email[i],user_pass[i],)))
-
-for i in t:
-    i.start()
-for i in t:
-    i.join()
-
-print('Done')
-time.sleep(300)
+    for i in t:
+        i.start()
+    for i in t:
+        i.join()
