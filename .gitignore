@@ -89,10 +89,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-<<<<<<< HEAD
-=======
 venv*/
->>>>>>> feature_branch
 
 # Spyder project settings
 .spyderproject
