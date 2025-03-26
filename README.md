@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Bing_Search_Automation
-This program automates the bing searches on pc, mobile and reward quizzes.
-=======
 # Bing Search Automation
 
 Automate Bing searches to earn Microsoft Rewards points efficiently across multiple accounts.
@@ -69,4 +65,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Disclaimer
 
 This tool is for educational purposes only. Use responsibly and in accordance with Microsoft's terms of service.
->>>>>>> feature_branch
