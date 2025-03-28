@@ -192,8 +192,8 @@ def quiz(browser):
                 # If we can't get points, assume we're done
                 break
             time.sleep(2)
-    except Exception as e:
-        print(f'failed 2: {e}')
+    except:
+        print('failed 2')
     try:
         for i in range(0,11):
             browser.find_element(By.CSS_SELECTOR, 'div[id=rqAnswerOption0]').click()
@@ -220,7 +220,7 @@ def pc(email, password, arg, browser_name='edge'):
 
     process(browser, email, password)
 
-    if arg and arg[1] == 'alp':
+    if arg and arg[1] in ['alp', 'pc']:
         perform_searches(browser, 'PC', email)
     elif arg and arg[1] == 'quiz':
         quiz(browser)
@@ -230,12 +230,10 @@ def pc(email, password, arg, browser_name='edge'):
 
 def load(email, password, arg, browser_name='edge'):
     if arg:
-        if arg[1] == 'pc':
+        if arg[1] in ['pc', 'alp', 'quiz']:
             pc(email, password, arg, browser_name)
         elif arg[1] == 'mobile':
             mobile(email, password, browser_name)
-        elif arg[1] in ['quiz', 'alp']:
-            pc(email, password, arg, browser_name)
         else:
             pc(email, password, arg, browser_name)
             mobile(email, password, browser_name)
@@ -245,7 +243,8 @@ def load(email, password, arg, browser_name='edge'):
 
     print('Done')
     try:
-        time.sleep(3000)
+        if arg and arg[1] not in ['pc', 'alp', 'mobile']:
+            time.sleep(3000)
     except KeyboardInterrupt:
         pass
 
