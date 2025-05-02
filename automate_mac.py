@@ -9,47 +9,91 @@ import time
 import sys
 import multiprocessing
 import os
+import random
 from dotenv import load_dotenv
 
+def get_random_user_agent():
+    """Get a random user agent string"""
+    user_agents = [
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Edge/120.0.0.0'
+    ]
+    return random.choice(user_agents)
+
 def get_browser(browser_name='edge'):
-    """Initialize browser with automatic driver management"""
+    """Initialize browser with stealth mode and anti-detection measures"""
     browser_name = browser_name.lower()
     if browser_name == 'chrome':
         options = webdriver.ChromeOptions()
         options.add_argument('--no-sandbox')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument(f'user-agent={get_random_user_agent()}')
         return webdriver.Chrome(options=options)
     elif browser_name == 'edge':
         options = webdriver.EdgeOptions()
         options.add_argument('--no-sandbox')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument(f'user-agent={get_random_user_agent()}')
         return webdriver.Edge(options=options)
     elif browser_name == 'firefox':
         options = webdriver.FirefoxOptions()
         options.add_argument('--no-sandbox')
+        options.set_preference('dom.webdriver.enabled', False)
+        options.set_preference('useAutomationExtension', False)
+        options.set_preference('general.useragent.override', get_random_user_agent())
         return webdriver.Firefox(options=options)
     elif browser_name == 'safari':
         return webdriver.Safari()
     else:
         raise ValueError(f"Unsupported browser: {browser_name}")
 
+def random_sleep(min_time=1, max_time=3):
+    """Sleep for a random amount of time to simulate human behavior"""
+    time.sleep(random.uniform(min_time, max_time))
+
+def human_like_type(element, text):
+    """Type text in a human-like manner with random delays between keystrokes"""
+    for char in text:
+        element.send_keys(char)
+        time.sleep(random.uniform(0.1, 0.3))
+
 def search(browser, word):
-    """Search for a word on Bing and wait for results to load"""
+    """Search for a word on Bing with human-like behavior"""
+    # Random delay before starting search
+    random_sleep(2, 4)
+    
     # Find the search box
     text_area = browser.find_element(By.ID, 'sb_form_q')
     
-    # Clear the search box first
+    # Clear the search box first with human-like behavior
     text_area.clear()
+    random_sleep(0.5, 1)
     
     # Alternative clearing method if simple clear() doesn't work
     if text_area.get_attribute('value'):
-        text_area.send_keys(Keys.COMMAND + 'a')  # Select all text (use CONTROL for Windows)
-        text_area.send_keys(Keys.DELETE)  # Delete selected text
-        
-    # Enter the new search term
-    text_area.send_keys(word)
+        text_area.send_keys(Keys.COMMAND + 'a')
+        random_sleep(0.3, 0.7)
+        text_area.send_keys(Keys.DELETE)
+        random_sleep(0.3, 0.7)
+    
+    # Type the search term in a human-like manner
+    human_like_type(text_area, word)
+    
+    # Random delay before pressing enter
+    random_sleep(0.5, 1.5)
     text_area.send_keys(Keys.ENTER)
     
-    # Wait for the search results to load
-    time.sleep(2)
+    # Random delay after search
+    random_sleep(2, 4)
 
 def perform_searches(browser, device, email):
     """Perform searches using trending topics and random words instead of alphabets"""
@@ -89,22 +133,58 @@ def perform_searches(browser, device, email):
             search(browser, search_terms[i])
 
 def process(browser,email,password):
-    browser.find_element(By.ID, 'i0116').send_keys(email)
-    browser.find_element(By.ID, 'idSIButton9').click()
-    time.sleep(5)
-    browser.find_element(By.ID, 'i0118').send_keys(password)
-    time.sleep(1)
-    browser.find_element(By.ID, 'idSIButton9').click()
-    time.sleep(5)
+    try:
+        browser.find_element(By.ID, 'i0116').send_keys(email)
+        browser.find_element(By.ID, 'idSIButton9').click()
+        time.sleep(5)
+        browser.find_element(By.ID, 'i0118').send_keys(password)
+        time.sleep(1)
+        browser.find_element(By.ID, 'idSIButton9').click()
+        time.sleep(5)
+    except:
+        try:
+            browser.find_element(By.ID, 'usernameEntry').send_keys(email)
+            browser.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton"]').click()
+            time.sleep(5)
+            browser.find_element(By.ID, 'passwordEntry').send_keys(password)
+            browser.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton"]').click()
+            time.sleep(1)
+            browser.find_element(By.ID, 'idSIButton9').click()
+            time.sleep(5)
+        except Exception as e:
+            print(f"Error during login: {e}")
+            print('Error in login process')
+            return
+    
+    # Try to click "Skip for now" button using different selectors
+    try:
+        # First try by aria-label
+        skip_buttons = browser.find_elements(By.CSS_SELECTOR, 'button[aria-label="Skip for now"]')
+        if skip_buttons:
+            skip_buttons[0].click()
+            time.sleep(2)
+        else:
+            # Try by class name pattern (partial match with the most distinctive class)
+            skip_buttons = browser.find_elements(By.CSS_SELECTOR, 'button.ext-secondary')
+            if skip_buttons:
+                skip_buttons[0].click()
+                time.sleep(2)
+            else:
+                # Try by looking for the text content
+                buttons = browser.find_elements(By.TAG_NAME, 'button')
+                for button in buttons:
+                    if "skip" in button.text.lower():
+                        button.click()
+                        time.sleep(2)
+                        break
+    except Exception as e:
+        print(f"Could not click 'Skip for now' button: {e}")
+    
     try:
         browser.find_element(By.ID, 'declineButton').click()
         time.sleep(5)
-        # browser.find_element(By.ID, 'i0118').send_keys(password)
-        # time.sleep(1)
-        # browser.find_element(By.ID, 'idSIButton9').click()
-        # time.sleep(5)
     except:
-        print('Ignore')
+        print('No decline button found - continuing')
 
 def quiz(browser):
     browser.get('https://rewards.bing.com/?ref=rewardspanel')
@@ -242,11 +322,7 @@ def load(email, password, arg, browser_name='edge'):
         mobile(email, password, browser_name)
 
     print('Done')
-    try:
-        if arg and arg[1] not in ['pc', 'alp', 'mobile']:
-            time.sleep(3000)
-    except KeyboardInterrupt:
-        pass
+    time.sleep(300)
 
 def load_credentials():
     """Load user credentials from environment variables securely"""
