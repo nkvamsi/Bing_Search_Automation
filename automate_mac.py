@@ -136,7 +136,6 @@ def process(browser,email,password):
     try:
         browser.find_element(By.ID, 'i0116').send_keys(email)
         browser.find_element(By.ID, 'idSIButton9').click()
-        time.sleep(5)
         browser.find_element(By.ID, 'i0118').send_keys(password)
         time.sleep(1)
         browser.find_element(By.ID, 'idSIButton9').click()
@@ -146,15 +145,49 @@ def process(browser,email,password):
             browser.find_element(By.ID, 'usernameEntry').send_keys(email)
             browser.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton"]').click()
             time.sleep(5)
+            # Check for "Other ways to sign in" in the alternative flow as well
+            try:
+                other_ways_links = browser.find_elements(By.XPATH, "//span[contains(text(), 'Other ways to sign in')]")
+                if other_ways_links:
+                    other_ways_links[0].click()
+                    time.sleep(2)
+                    print("Clicked 'Other ways to sign in' in alternative flow")
+            except Exception as e:
+                print(f"No 'Other ways to sign in' found in alternative flow: {e}")
+            # Look for "Use your password" link and click it if found
+            try:
+                use_password_links = browser.find_elements(By.XPATH, "//span[contains(text(), 'Use your password')]")
+                if use_password_links:
+                    use_password_links[0].click()
+                    time.sleep(2)
+                    print("Clicked 'Use your password' link")
+                else:
+                    # Try alternate selectors
+                    use_password_links = browser.find_elements(By.CSS_SELECTOR, "span.fui-Link")
+                    for link in use_password_links:
+                        if "password" in link.text.lower():
+                            link.click()
+                            time.sleep(2)
+                            print("Clicked password option using alternate selector")
+                            break
+            except Exception as e:
+                print(f"Error clicking 'Use your password' link: {e}")
+                
+            # Remove the excessive wait time
+            time.sleep(3)
             browser.find_element(By.ID, 'passwordEntry').send_keys(password)
             browser.find_element(By.CSS_SELECTOR, 'button[data-testid="primaryButton"]').click()
             time.sleep(1)
-            browser.find_element(By.ID, 'idSIButton9').click()
-            time.sleep(5)
         except Exception as e:
-            print(f"Error during login: {e}")
             print('Error in login process')
             return
+        
+    # Handle the "Stay signed in?" prompt
+    try:
+        browser.find_element(By.ID, 'idSIButton9').click()
+        time.sleep(5)
+    except:
+        pass
     
     # Try to click "Skip for now" button using different selectors
     try:
@@ -261,8 +294,8 @@ def quiz(browser):
                     except:
                         # No wrong answer found, means we got it right
                         break
-                except Exception as e:
-                    print(f'Error clicking option {i}: {e}')
+                except:
+                    print(f'Error clicking option {i}')
                     continue
 
             # Re-fetch earned points after trying options
