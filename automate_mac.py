@@ -357,6 +357,23 @@ def load(email, password, arg, browser_name='edge'):
     print('Done')
     time.sleep(300)
 
+def load_with_retry(email, password, arg, browser_name='edge', max_retries=3):
+    """Wrapper function to handle retries for failed processes"""
+    retries = 0
+    while retries < max_retries:
+        try:
+            load(email, password, arg, browser_name)
+            return  # Success, exit the retry loop
+        except Exception as e:
+            retries += 1
+            print(f"Attempt {retries} failed for {email}: {str(e)}")
+            if retries < max_retries:
+                print(f"Retrying {email} in 10 seconds...")
+                time.sleep(10)
+            else:
+                print(f"Max retries reached for {email}. Giving up.")
+                raise  # Re-raise the exception if max retries reached
+
 def load_credentials():
     """Load user credentials from environment variables securely"""
     # Load environment variables from .env file if it exists
@@ -389,6 +406,7 @@ def load_credentials():
 # Replace hardcoded credentials with environment variables
 if __name__ == '__main__':
     t = []
+    failed_processes = []
     arg = sys.argv[1:]
     browser_name = arg[0] if arg and arg[0] in ['chrome', 'edge', 'firefox', 'safari'] else 'edge'
     
@@ -411,13 +429,33 @@ if __name__ == '__main__':
         selected_user_emails = all_user_emails
         selected_user_passwords = all_user_passwords
 
+    # First attempt to run all processes
     for i in range(len(selected_user_emails)):
-        t.append(multiprocessing.Process(
-            target=load, 
+        p = multiprocessing.Process(
+            target=load_with_retry, 
             args=(selected_user_emails[i], selected_user_passwords[i], arg, browser_name)
-        ))
+        )
+        t.append(p)
+        p.start()
 
-    for process in t:
-        process.start()
-    for process in t:
-        process.join()
+    # Wait for all processes to complete and collect failed ones
+    for i, p in enumerate(t):
+        p.join()
+        if p.exitcode != 0:  # Process failed
+            failed_processes.append((selected_user_emails[i], selected_user_passwords[i]))
+
+    # Retry failed processes
+    if failed_processes:
+        print("\nRetrying failed processes...")
+        retry_processes = []
+        for email, password in failed_processes:
+            p = multiprocessing.Process(
+                target=load_with_retry, 
+                args=(email, password, arg, browser_name)
+            )
+            retry_processes.append(p)
+            p.start()
+
+        # Wait for retry processes to complete
+        for p in retry_processes:
+            p.join()
